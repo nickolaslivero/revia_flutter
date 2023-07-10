@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,11 +31,14 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _imagePath;
 
   void _addImage() async {
-    final String imagePath = 'image.png';
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    setState(() {
-      _imagePath = imagePath;
-    });
+    if (image != null) {
+      setState(() {
+        _imagePath = image.path;
+      });
+    }
   }
 
   void _verifyImage() {
