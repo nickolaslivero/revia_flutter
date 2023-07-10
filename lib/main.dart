@@ -88,24 +88,26 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: const Text('RevIA'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _addImage,
-              child: const Text('Add Image'),
-            ),
-            if (_imagePath != null)
-              Container(
-                margin: const EdgeInsets.all(20),
-                child: Image.file(File(_imagePath!)),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: _addImage,
+                child: const Text('Add Image'),
               ),
-            ElevatedButton(
-              onPressed: _verifyImage,
-              child: const Text('Verify Image'),
-            ),
-          ],
+              if (_imagePath != null)
+                Container(
+                  margin: const EdgeInsets.all(20),
+                  child: Image.file(File(_imagePath!)),
+                ),
+              ElevatedButton(
+                onPressed: _verifyImage,
+                child: const Text('Verify Image'),
+              ),
+            ],
+          ),
         ),
       ),
     );
