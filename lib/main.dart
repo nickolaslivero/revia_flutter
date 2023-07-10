@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -95,15 +96,15 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _addImage,
               child: const Text('Add Image'),
             ),
+            if (_imagePath != null)
+              Container(
+                margin: const EdgeInsets.all(20),
+                child: Image.file(File(_imagePath!)),
+              ),
             ElevatedButton(
               onPressed: _verifyImage,
               child: const Text('Verify Image'),
             ),
-            if (_imagePath != null)
-              Container(
-                margin: const EdgeInsets.all(20),
-                child: Image.asset(_imagePath!),
-              ),
           ],
         ),
       ),
