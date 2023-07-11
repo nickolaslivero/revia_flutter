@@ -1,6 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -39,25 +41,45 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _imagePath = image.path;
       });
+
+      final File imageFile = File(_imagePath!);
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+      print("base64 image: \n");
+      print(base64Image);
     }
   }
 
-  void _verifyImage() {
+
+  void _verifyImage() async {
     if (_imagePath != null) {
+      final File imageFile = File(_imagePath!);
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+
       showDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Verifying Image'),
-            content: const Text('Image verification in progress...'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
+        builder: (_) {
+          return FutureBuilder<bool>(
+            future: _sendImageForVerification(base64Image),
+            builder: (_, AsyncSnapshot<bool> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const AlertDialog(
+                  title: Text('Verifying Image'),
+                  content: Text('Image verification in progress...'),
+                );
+              } else if (snapshot.hasData && snapshot.data!) {
+                return const AlertDialog(
+                  title: Text('Success'),
+                  content: Text('Image verification successful.'),
+                );
+              } else {
+                return const AlertDialog(
+                  title: Text('Error'),
+                  content: Text('Image verification failed.'),
+                );
+              }
+            },
           );
         },
       );
@@ -65,21 +87,23 @@ class _MyHomePageState extends State<MyHomePage> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: const Text('Please add an image first.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
+          return const AlertDialog(
+            title: Text('Error'),
+            content: Text('Please add an image first.'),
           );
         },
       );
     }
+  }
+
+  Future<bool> _sendImageForVerification(String base64Image) async {
+    final response = await http.post(
+      Uri.parse('https://exemplo.com/upload'),
+      // Substitua pelo URL correto da sua API
+      body: {'image': base64Image},
+    );
+
+    return response.statusCode == 200;
   }
 
   @override
@@ -97,15 +121,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: _addImage,
                 child: const Text('Add Image'),
               ),
+              ElevatedButton(
+                onPressed: _verifyImage,
+                child: const Text('Verify Image'),
+              ),
               if (_imagePath != null)
                 Container(
                   margin: const EdgeInsets.all(20),
                   child: Image.file(File(_imagePath!)),
                 ),
-              ElevatedButton(
-                onPressed: _verifyImage,
-                child: const Text('Verify Image'),
-              ),
             ],
           ),
         ),
