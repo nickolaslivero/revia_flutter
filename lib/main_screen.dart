@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'login_screen.dart';
+
 class MainScreen extends StatefulWidget {
   final String token;
 
@@ -97,6 +99,13 @@ class MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _navigateToLoginScreen() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,6 +135,10 @@ class MainScreenState extends State<MainScreen> {
               Container(
                 margin: const EdgeInsets.all(20),
                 child: Text(widget.token)
+              ),
+              TextButton(
+                onPressed: _navigateToLoginScreen,
+                child: const Text('Deslogar'),
               ),
             ],
           ),
