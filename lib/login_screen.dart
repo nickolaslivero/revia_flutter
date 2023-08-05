@@ -69,38 +69,40 @@ class LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: const Text('Login'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome de usuário ou E-mail',
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome de usuário ou E-mail',
+                ),
               ),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Senha',
+              TextField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Senha',
+                ),
+                obscureText: true,
               ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _loginUser();
-              },
-              child: const Text('Login'),
-            ),
-            TextButton(
-              onPressed: () {
-                _navigateToRegisterScreen();
-              },
-              child: const Text('Não possui uma conta? Cadastre'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  _loginUser();
+                },
+                child: const Text('Login'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _navigateToRegisterScreen();
+                },
+                child: const Text('Não possui uma conta? Cadastre'),
+              ),
+            ],
+          ),
         ),
       ),
     );

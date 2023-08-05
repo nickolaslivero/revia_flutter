@@ -61,51 +61,53 @@ class RegistrationScreenState extends State<RegistrationScreen> {
       appBar: AppBar(
         title: const Text('Cadastro de Usuário'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome de usuário',
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome de usuário',
+                ),
               ),
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'E-mail',
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'E-mail',
+                ),
               ),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Senha',
+              TextField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Senha',
+                ),
+                obscureText: true,
               ),
-              obscureText: true,
-            ),
-            TextField(
-              controller: _confirmPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Confirmar Senha',
+              TextField(
+                controller: _confirmPasswordController,
+                decoration: const InputDecoration(
+                  labelText: 'Confirmar Senha',
+                ),
+                obscureText: true,
               ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _registerUser();
-              },
-              child: const Text('Cadastrar'),
-            ),
-            TextButton(
-              onPressed: () {
-                _navigateToLoginScreen();
-              },
-              child: const Text('Já possui uma conta? Login'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  _registerUser();
+                },
+                child: const Text('Cadastrar'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _navigateToLoginScreen();
+                },
+                child: const Text('Já possui uma conta? Login'),
+              ),
+            ],
+          ),
         ),
       ),
     );
