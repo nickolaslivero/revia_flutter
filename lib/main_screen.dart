@@ -11,7 +11,7 @@ import 'login_screen.dart';
 class MainScreen extends StatefulWidget {
   final String token;
 
-  const MainScreen({super.key, required this.token});
+  const MainScreen({Key? key, required this.token}) : super(key: key);
 
   @override
   MainScreenState createState() => MainScreenState();
@@ -28,63 +28,50 @@ class MainScreenState extends State<MainScreen> {
       setState(() {
         _imagePath = image.path;
       });
+
+      // Chamar a função de verificação após adicionar a imagem
+      await _verifyImage(_imagePath!);
     }
   }
 
-  void _verifyImage() async {
-    if (_imagePath != null) {
-      final File imageFile = File(_imagePath!);
+  Future<void> _verifyImage(String imagePath) async {
+    final response = await _sendImageForVerification(imagePath);
+
+    if (response.statusCode == 200) {
+      _showDialog('Success', 'Image verification successful.');
+    } else {
+      _showDialog('Error',
+          'Image verification failed. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<http.Response> _sendImageForVerification(String imagePath) async {
+    try {
+      final File imageFile = File(imagePath);
       final List<int> imageBytes = await imageFile.readAsBytes();
       final String base64Image = base64Encode(imageBytes);
 
-      final currentContext = useContext();
-      showDialog(
-        context: currentContext,
-        builder: (_) {
-          return FutureBuilder<bool>(
-            future: _sendImageForVerification(base64Image),
-            builder: (_, AsyncSnapshot<bool> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const AlertDialog(
-                  title: Text('Verifying Image'),
-                  content: Text('Image verification in progress...'),
-                );
-              } else if (snapshot.hasData && snapshot.data!) {
-                return const AlertDialog(
-                  title: Text('Success'),
-                  content: Text('Image verification successful.'),
-                );
-              } else {
-                return const AlertDialog(
-                  title: Text('Error'),
-                  content: Text('Image verification failed.'),
-                );
-              }
-            },
-          );
-        },
+      final response = await http.post(
+        Uri.parse('http://18.228.213.252:8000/api/process-image/'),
+        body: {'image': base64Image},
       );
-    } else {
-      showDialog(
-        context: useContext(),
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            title: Text('Error'),
-            content: Text('Please add an image first.'),
-          );
-        },
-      );
+
+      return response;
+    } catch (e) {
+      throw e;
     }
   }
 
-  Future<bool> _sendImageForVerification(String base64Image) async {
-    final response = await http.post(
-      Uri.parse('https://exemplo.com/upload'),
-      // Substitua pelo URL correto da sua API
-      body: {'image': base64Image},
+  void _showDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+        );
+      },
     );
-
-    return response.statusCode == 200;
   }
 
   Widget _buildImageWidget() {
@@ -129,13 +116,17 @@ class MainScreenState extends State<MainScreen> {
                 child: _buildImageWidget(),
               ),
               ElevatedButton(
-                onPressed: _verifyImage,
+                onPressed: () {
+                  if (_imagePath != null) {
+                    _verifyImage(_imagePath!);
+                  } else {
+                    _showDialog('Error', 'Please add an image first.');
+                  }
+                },
                 child: const Text('Verify Image'),
               ),
               Container(
-                margin: const EdgeInsets.all(20),
-                child: Text(widget.token)
-              ),
+                  margin: const EdgeInsets.all(20), child: Text(widget.token)),
               TextButton(
                 onPressed: _navigateToLoginScreen,
                 child: const Text('Deslogar'),
