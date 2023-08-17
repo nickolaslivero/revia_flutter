@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'login_screen.dart';
@@ -19,6 +18,8 @@ class MainScreen extends StatefulWidget {
 
 class MainScreenState extends State<MainScreen> {
   String? _imagePath;
+  String? _resultText;
+  String? _percentText;
 
   void _addImage() async {
     final ImagePicker picker = ImagePicker();
@@ -29,36 +30,73 @@ class MainScreenState extends State<MainScreen> {
         _imagePath = image.path;
       });
 
-      // Chamar a função de verificação após adicionar a imagem
-      await _verifyImage(_imagePath!);
+      _resultText = null;
+      _percentText = null;
     }
   }
 
-  Future<void> _verifyImage(String imagePath) async {
-    final response = await _sendImageForVerification(imagePath);
-
-    if (response.statusCode == 200) {
-      _showDialog('Success', 'Image verification successful.');
-    } else {
-      _showDialog('Error',
-          'Image verification failed. Status code: ${response.statusCode}');
-    }
-  }
-
-  Future<http.Response> _sendImageForVerification(String imagePath) async {
+  Future<Map<String, dynamic>> _sendImageForVerification(
+      String imagePath) async {
     try {
       final File imageFile = File(imagePath);
       final List<int> imageBytes = await imageFile.readAsBytes();
       final String base64Image = base64Encode(imageBytes);
 
+      //print('Sending image to server...');
       final response = await http.post(
         Uri.parse('http://18.228.213.252:8000/api/process-image/'),
-        body: {'image': base64Image},
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'base64_image': base64Image,
+        }),
       );
+      //print('Response status code: ${response.statusCode}');
+      //print('Response body: ${response.body}');
 
-      return response;
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final Map<String, dynamic> prediction = responseData['prediction'];
+        final double fakeProbability = prediction['fake'] * 100;
+        final double realProbability = prediction['real'] * 100;
+
+        String resultText = '';
+        double probability = 0;
+
+        if (fakeProbability > realProbability) {
+          resultText = 'Fake';
+          probability = fakeProbability;
+        } else {
+          resultText = 'Real';
+          probability = realProbability;
+        }
+
+        return {
+          'resultText': resultText,
+          'percentText': '${probability.toStringAsFixed(2)}%',
+        };
+      } else {
+        return {
+          'resultText': 'Error',
+          'percentText': '0%',
+        };
+      }
     } catch (e) {
-      throw e;
+      rethrow;
+    }
+  }
+
+  void _verifyImage() async {
+    if (_imagePath != null) {
+      final result = await _sendImageForVerification(_imagePath!);
+
+      setState(() {
+        _resultText = result['resultText'];
+        _percentText = result['percentText'];
+      });
+    } else {
+      _showDialog('Error', 'Por favor, adicione uma imagem primeiro.');
     }
   }
 
@@ -69,18 +107,84 @@ class MainScreenState extends State<MainScreen> {
         return AlertDialog(
           title: Text(title),
           content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
         );
       },
     );
   }
 
   Widget _buildImageWidget() {
+    return Column(
+      children: [
+        _buildImage(),
+        const SizedBox(height: 10),
+        if (_resultText != null && _percentText != null) _buildResultWidget(),
+      ],
+    );
+  }
+
+  Widget _buildImage() {
     if (_imagePath != null) {
-      if (kIsWeb) {
-        return Image.network(_imagePath!);
-      } else {
-        return Image.file(File(_imagePath!));
-      }
+      return kIsWeb
+          ? Image.network(
+              _imagePath!,
+              fit: BoxFit.scaleDown,
+              width: 450,
+              height: 450,
+            )
+          : Image.file(
+              File(_imagePath!),
+              fit: BoxFit.scaleDown,
+              width: 450,
+              height: 450,
+            );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  bool _showLoading = true;
+
+  Widget _buildResultWidget() {
+    if (_showLoading) {
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() {
+          _showLoading = false;
+        });
+      });
+      return const Column(
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 10),
+        ],
+      );
+    } else if (_resultText != null && _percentText != null) {
+      return Column(
+        children: [
+          Text(
+            _resultText!,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+          Text(
+            _percentText!,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      );
     } else {
       return const SizedBox.shrink();
     }
@@ -97,39 +201,51 @@ class MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('RevIA'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: _navigateToLoginScreen,
+            ),
+            Center(
+              child: Image.asset(
+                'assets/revia_logo.png',
+                width: 90,
+                height: 90,
+              ),
+            ),
+            const SizedBox(width: 48),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Container(
-                margin: const EdgeInsets.all(20),
+              const SizedBox(
+                height: 20,
               ),
-              ElevatedButton(
-                onPressed: _addImage,
-                child: const Text('Add Image'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _addImage,
+                    child: const Text('Adicionar'),
+                  ),
+                  Container(
+                    width: 20,
+                  ),
+                  ElevatedButton(
+                    onPressed: _verifyImage,
+                    child: const Text('Verificar'),
+                  ),
+                ],
               ),
               Container(
                 margin: const EdgeInsets.all(20),
                 child: _buildImageWidget(),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_imagePath != null) {
-                    _verifyImage(_imagePath!);
-                  } else {
-                    _showDialog('Error', 'Please add an image first.');
-                  }
-                },
-                child: const Text('Verify Image'),
-              ),
-              Container(
-                  margin: const EdgeInsets.all(20), child: Text(widget.token)),
-              TextButton(
-                onPressed: _navigateToLoginScreen,
-                child: const Text('Deslogar'),
               ),
             ],
           ),

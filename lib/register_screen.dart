@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'login_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+  const RegistrationScreen({Key? key}) : super(key: key);
 
   @override
   RegistrationScreenState createState() => RegistrationScreenState();
@@ -17,8 +17,18 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   void _registerUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     String url = 'http://18.228.213.252:8000/api/users/register/';
 
     Map<String, String> data = {
@@ -38,13 +48,48 @@ class RegistrationScreenState extends State<RegistrationScreen> {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('Cadastro realizado com sucesso!');
         _navigateToLoginScreen();
       } else {
-        print('Erro no cadastro. Código de erro: ${response.statusCode}');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Erro no cadastro'),
+              content: const Text('Ocorreu um erro ao tentar se registrar.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
       }
     } catch (e) {
-      print('Erro na requisição: $e');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Erro no cadastro'),
+            content: const Text('Ocorreu um erro ao tentar se registrar.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -58,55 +103,133 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cadastro de Usuário'),
-      ),
+      backgroundColor: const Color(0xFF145DA0),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome de usuário',
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/revia_logo.png'), // Adicione a imagem aqui
+                const SizedBox(height: 20.0),
+                TextFormField(
+                  controller: _usernameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Nome de usuário',
+                    labelStyle: const TextStyle(color: Colors.white),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo é obrigatório';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'E-mail',
+                const SizedBox(height: 12.0),
+                TextFormField(
+                  controller: _emailController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'E-mail',
+                    labelStyle: const TextStyle(color: Colors.white),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo é obrigatório';
+                    }
+                    // Adicione aqui a validação do formato de e-mail se necessário
+                    return null;
+                  },
                 ),
-              ),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Senha',
+                const SizedBox(height: 12.0),
+                TextFormField(
+                  controller: _passwordController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    labelStyle: const TextStyle(color: Colors.white),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo é obrigatório';
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-              ),
-              TextField(
-                controller: _confirmPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Confirmar Senha',
+                const SizedBox(height: 12.0),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar Senha',
+                    labelStyle: const TextStyle(color: Colors.white),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo é obrigatório';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'As senhas não coincidem';
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  _registerUser();
-                },
-                child: const Text('Cadastrar'),
-              ),
-              TextButton(
-                onPressed: () {
-                  _navigateToLoginScreen();
-                },
-                child: const Text('Já possui uma conta? Login'),
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _registerUser,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF003366),
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Cadastrar'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _navigateToLoginScreen();
+                  },
+                  child: const Text('Já possui uma conta? Login',
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
