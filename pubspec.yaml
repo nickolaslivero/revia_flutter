@@ -1,5 +1,5 @@
-name: reviav1
-description: A new Flutter project.
+name: RevIA
+description: RevIA Flutter project.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -21,17 +21,12 @@ version: 1.0.0+1
 environment:
   sdk: '>=3.0.3 <4.0.0'
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
+# flutter pub upgrade --major-versions
+# flutter pub outdated
 dependencies:
-  http: ^0.13.3
-  image_picker: ^0.8.4+3
-  flutter_hooks: ^0.18.0
-  provider: ^5.0.0
+  http: ^1.1.0
+  connectivity: ^3.0.6
+  image_picker: ^1.0.2
   flutter:
     sdk: flutter
 

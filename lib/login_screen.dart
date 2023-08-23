@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:http/http.dart' as http;
 
 import 'main_screen.dart';
@@ -18,8 +19,68 @@ class LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
+  Future<bool> serverStatus() async {
+    try {
+      final response =
+          await http.head(Uri.parse('http://18.228.213.252:8000/api/docs'));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> internetStatus() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }
+
   void _loginUser() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    bool isServerOnline = await serverStatus();
+    bool isConnectedToInternet = await internetStatus();
+
+    if (!isConnectedToInternet) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Erro de Conexão'),
+            content: const Text('Você não está conectado à internet.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    if (!isServerOnline) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Erro de Conexão'),
+            content: const Text('O servidor não está disponível.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
       return;
     }
 
@@ -46,17 +107,14 @@ class LoginScreenState extends State<LoginScreen> {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         final String token = responseData['token'];
-        //print(token);
         _navigateToMainScreen(token);
       } else {
-        //print('err: ${response.statusCode}');
         showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: const Text('Erro de Login'),
-              content: const Text(
-                  'Credenciais inválidas. Por favor, tente novamente.'),
+              content: const Text('Senha incorreta ou usuário não existe.'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -69,8 +127,27 @@ class LoginScreenState extends State<LoginScreen> {
           },
         );
       }
+      print(response.statusCode);
+      print(response.body);
     } catch (e) {
-      //print('req err: $e');
+      // Handle request error
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Erro de Login'),
+            content: const Text('Ocorreu um erro ao tentar fazer login.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -106,18 +183,22 @@ class LoginScreenState extends State<LoginScreen> {
               children: [
                 Image.asset('assets/revia_logo.png'),
                 const SizedBox(height: 20.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Nome de usuário',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _usernameController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
+                  // Change text color
                   decoration: InputDecoration(
-                    labelText: 'Nome de usuário',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white, // White background
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -129,18 +210,22 @@ class LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 12.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Senha',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _passwordController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
+                  // Change text color
                   decoration: InputDecoration(
-                    labelText: 'Senha',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white, // White background
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -166,8 +251,10 @@ class LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     _navigateToRegisterScreen();
                   },
-                  child: const Text('Não possui uma conta? Cadastre',
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Não possui uma conta? Cadastre',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

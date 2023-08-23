@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:http/http.dart' as http;
 
 import 'login_screen.dart';
@@ -20,8 +21,72 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
+  final RegExp _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
+  Future<bool> serverStatus() async {
+    try {
+      final response =
+          await http.head(Uri.parse('http://18.228.213.252:8000/api/docs'));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> internetStatus() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }
+
   void _registerUser() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    bool isServerOnline = await serverStatus();
+    bool isConnectedToInternet = await internetStatus();
+
+    if (!isConnectedToInternet) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Erro de Conexão'),
+            content: const Text('Você não está conectado à internet.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    if (!isServerOnline) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Erro de Conexão'),
+            content: const Text('O servidor não está disponível.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
       return;
     }
 
@@ -49,13 +114,13 @@ class RegistrationScreenState extends State<RegistrationScreen> {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _navigateToLoginScreen();
-      } else {
+      } else if (response.statusCode == 400) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Erro no cadastro'),
-              content: const Text('Ocorreu um erro ao tentar se registrar.'),
+              content: const Text('Usuário ou e-mail já cadastrado.'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -112,20 +177,23 @@ class RegistrationScreenState extends State<RegistrationScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/revia_logo.png'), // Adicione a imagem aqui
+                Image.asset('assets/revia_logo.png'),
                 const SizedBox(height: 20.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Nome de usuário',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _usernameController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    labelText: 'Nome de usuário',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -137,18 +205,21 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 const SizedBox(height: 12.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'E-mail',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _emailController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    labelText: 'E-mail',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -156,23 +227,28 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Este campo é obrigatório';
                     }
-                    // Adicione aqui a validação do formato de e-mail se necessário
+                    if (!_emailRegex.hasMatch(value)) {
+                      return 'Por favor, insira um e-mail válido';
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 12.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Senha',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _passwordController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    labelText: 'Senha',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -185,18 +261,21 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 const SizedBox(height: 12.0),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Confirmar Senha',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 TextFormField(
                   controller: _confirmPasswordController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    labelText: 'Confirmar Senha',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -225,8 +304,10 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                   onPressed: () {
                     _navigateToLoginScreen();
                   },
-                  child: const Text('Já possui uma conta? Login',
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Já possui uma conta? Login',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

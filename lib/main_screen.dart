@@ -41,8 +41,6 @@ class MainScreenState extends State<MainScreen> {
       final File imageFile = File(imagePath);
       final List<int> imageBytes = await imageFile.readAsBytes();
       final String base64Image = base64Encode(imageBytes);
-
-      //print('Sending image to server...');
       final response = await http.post(
         Uri.parse('http://18.228.213.252:8000/api/process-image/'),
         headers: {
@@ -65,7 +63,7 @@ class MainScreenState extends State<MainScreen> {
         double probability = 0;
 
         if (fakeProbability > realProbability) {
-          resultText = 'Fake';
+          resultText = 'Artificial';
           probability = fakeProbability;
         } else {
           resultText = 'Real';
